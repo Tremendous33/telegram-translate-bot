@@ -1,37 +1,73 @@
-import logging
 import os
-from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
+import logging
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    MessageHandler,
+    CallbackQueryHandler,
+    ContextTypes,
+    filters,
+)
 from deep_translator import GoogleTranslator
-
 
 logging.basicConfig(level=logging.INFO)
 
-
-user_languages = {}
-
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 
+# Store user language preferences
+user_languages = {}
+
+# User sets language
 async def set_language(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if context.args:
-        user_languages[update.effective_user.id] = context.args[0]
-        await update.message.reply_text("Language set!")
+        lang = context.args[0].lower()
+        user_languages[update.effective_user.id] = lang
+        await update.message.reply_text(f"✅ Language set to {lang}")
     else:
         await update.message.reply_text("Usage: /setlang en")
 
-async def translate_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    message = update.message.text
-    for user_id, lang in user_languages.items():
-        translated = GoogleTranslator(source='auto', target=lang).translate(message)
+# Add translate button to messages
+async def add_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    keyboard = [
+        [InlineKeyboardButton("🌐 Translate", callback_data="translate")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.message.reply_text(
+        "Translate this message:",
+        reply_markup=reply_markup
+    )
 
-        try:
-            await context.bot.send_message(chat_id=user_id, text=translated)
-        except:
-            pass
+# Handle button click
+async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
 
-app = ApplicationBuilder().token(BOT_TOKEN).build()
+    user_id = query.from_user.id
+    target_lang = user_languages.get(user_id, "en")
 
-app.add_handler(CommandHandler("setlang", set_language))
-app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, translate_message))
+    original_message = query.message.reply_to_message.text
 
-app.run_polling()
+    try:
+        translated = GoogleTranslator(
+            source="auto", target=target_lang
+        ).translate(original_message)
+
+        await query.message.reply_text(translated)
+
+    except Exception as e:
+        logging.exception(e)
+        await query.message.reply_text("⚠️ Translation error.")
+
+def main():
+    app = ApplicationBuilder().token(BOT_TOKEN).build()
+
+    app.add_handler(CommandHandler("setlang", set_language))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, add_button))
+    app.add_handler(CallbackQueryHandler(handle_button))
+
+    app.run_polling()
+
+if __name__ == "__main__":
+    main()
+
