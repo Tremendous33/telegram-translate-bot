@@ -7,7 +7,7 @@ from deep_translator import GoogleTranslator
 
 logging.basicConfig(level=logging.INFO)
 
-translator = Translator()
+
 user_languages = {}
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
@@ -22,7 +22,8 @@ async def set_language(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def translate_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = update.message.text
     for user_id, lang in user_languages.items():
-        translated = translator.translate(message, dest=lang).text
+        translated = GoogleTranslator(source='auto', target=lang).translate(message)
+
         try:
             await context.bot.send_message(chat_id=user_id, text=translated)
         except:
