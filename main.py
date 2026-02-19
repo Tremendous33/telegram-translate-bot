@@ -2,7 +2,8 @@ import logging
 import os
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
-from googletrans import Translator
+from deep_translator import GoogleTranslator
+
 
 logging.basicConfig(level=logging.INFO)
 
