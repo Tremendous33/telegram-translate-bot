@@ -41,33 +41,23 @@ async def add_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # Handle button click
 async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
-    await query.answer()
-
     user_id = query.from_user.id
     target_lang = user_languages.get(user_id, "en")
 
-    original_message = query.message.reply_to_message.text
+    original_message = query.message.text
 
     try:
         translated = GoogleTranslator(
-            source="auto", target=target_lang
+            source="auto",
+            target=target_lang
         ).translate(original_message)
 
-        await query.message.reply_text(translated)
+        # Shows popup only to the person who clicked
+        await query.answer(text=translated[:200], show_alert=True)
 
-    except Exception as e:
-        logging.exception(e)
-        await query.message.reply_text("⚠️ Translation error.")
+    except Exception:
+        await query.answer(text="Translation error.", show_alert=True)
 
-def main():
-    app = ApplicationBuilder().token(BOT_TOKEN).build()
 
-    app.add_handler(CommandHandler("setlang", set_language))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, add_button))
-    app.add_handler(CallbackQueryHandler(handle_button))
 
-    app.run_polling()
-
-if __name__ == "__main__":
-    main()
 
