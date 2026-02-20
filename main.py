@@ -44,7 +44,7 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = query.from_user.id
     target_lang = user_languages.get(user_id, "en")
 
-    original_message = query.message.text
+    original_message = query.message.reply_to_message.text
 
     try:
         translated = GoogleTranslator(
