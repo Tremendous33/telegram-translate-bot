@@ -33,9 +33,10 @@ async def add_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("🌐 Translate", callback_data="translate")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text(
-        "Translate this message:",
-        reply_markup=reply_markup
+        await update.message.reply_text(
+        "🌐",
+        reply_markup=reply_markup,
+        reply_to_message_id=update.message.message_id
     )
 
 # Handle button click
