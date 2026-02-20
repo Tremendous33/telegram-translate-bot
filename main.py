@@ -20,7 +20,7 @@ user_languages = {}
 
 
 # =========================
-# SET USER LANGUAGE
+# SET LANGUAGE COMMAND
 # =========================
 async def set_language(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if context.args:
@@ -35,6 +35,10 @@ async def set_language(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ADD TRANSLATE BUTTON
 # =========================
 async def add_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # Ignore messages from bots (prevents loop)
+    if update.effective_user.is_bot:
+        return
+
     keyboard = [
         [InlineKeyboardButton("🌐 Translate", callback_data="translate")]
     ]
@@ -57,6 +61,7 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = query.from_user.id
     target_lang = user_languages.get(user_id, "en")
 
+    # Make sure there's something to translate
     if not query.message.reply_to_message:
         await query.answer("Nothing to translate.", show_alert=True)
         return
@@ -69,11 +74,17 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             target=target_lang
         ).translate(original_text)
 
-        # Popup only visible to person who clicked
-        await query.answer(text=translated[:200], show_alert=True)
+        # Popup only visible to the person who clicked
+        await query.answer(
+            text=translated[:200],
+            show_alert=True
+        )
 
     except Exception:
-        await query.answer(text="Translation error.", show_alert=True)
+        await query.answer(
+            text="Translation error.",
+            show_alert=True
+        )
 
 
 # =========================
@@ -91,7 +102,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-
